@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="BikeRoute Planner - Create, edit, and export GPX files for cycling routes with an intuitive map interface">
+    <meta name="keywords" content="bike route planner, cycling, GPX, route planning, bicycle navigation">
+    <meta name="author" content="BikeRoute Planner">
+    
+    <title>BikeRoute Planner</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    
+    <!-- Chart.js CSS (included in JS file) -->
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <h1 class="app-title">
+                <span class="bike-icon">🚴</span>
+                BikeRoute Planner
+            </h1>
+            <div class="header-controls">
+                <button id="new-route-btn" class="btn btn-primary" title="Create new route">
+                    New Route
+                </button>
+                <label for="gpx-import" class="btn btn-secondary" title="Import GPX file">
+                    Import GPX
+                    <input type="file" id="gpx-import" accept=".gpx" style="display: none;">
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Application Container -->
+    <main class="app-container">
+        <!-- Map Container (Left Side) -->
+        <section class="map-section">
+            <div id="map" class="map-container" role="application" aria-label="Interactive route planning map">
+                <!-- Loading overlay -->
+                <div id="map-loading" class="loading-overlay">
+                    <div class="spinner"></div>
+                    <p>Loading map...</p>
+                </div>
+            </div>
+            
+            <!-- Map Controls -->
+            <div class="map-controls">
+                <button id="clear-route-btn" class="btn btn-danger" title="Clear current route">
+                    Clear Route
+                </button>
+                <button id="reverse-route-btn" class="btn btn-secondary" title="Reverse route direction">
+                    Reverse
+                </button>
+            </div>
+        </section>
+
+        <!-- Sidebar (Right Side) -->
+        <aside class="sidebar">
+            <!-- Route Configuration -->
+            <section class="sidebar-section">
+                <h2 class="section-title">Route Settings</h2>
+                <div class="route-settings">
+                    <div class="input-group">
+                        <label for="route-name">Route Name:</label>
+                        <input type="text" id="route-name" placeholder="My Bike Route" maxlength="50">
+                    </div>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="round-trip">
+                            <span class="checkmark"></span>
+                            Round Trip
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Waypoints List -->
+            <section class="sidebar-section">
+                <h2 class="section-title">
+                    Waypoints
+                    <span class="section-subtitle">(Drag to reorder)</span>
+                </h2>
+                <div id="waypoints-list" class="waypoints-container">
+                    <div class="empty-state">
+                        <p>Click on the map to add waypoints</p>
+                        <small>Start planning your route by clicking anywhere on the map</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Route Statistics -->
+            <section class="sidebar-section">
+                <h2 class="section-title">Route Stats</h2>
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <span class="stat-label">Distance:</span>
+                        <span id="route-distance" class="stat-value">0 km</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Elevation Gain:</span>
+                        <span id="elevation-gain" class="stat-value">0 m</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Elevation Loss:</span>
+                        <span id="elevation-loss" class="stat-value">0 m</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Est. Time:</span>
+                        <span id="estimated-time" class="stat-value">0 min</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Elevation Profile -->
+            <section class="sidebar-section">
+                <h2 class="section-title">Elevation Profile</h2>
+                <div class="chart-container">
+                    <canvas id="elevation-chart" width="400" height="200"></canvas>
+                    <div id="chart-empty-state" class="empty-state">
+                        <p>No elevation data</p>
+                        <small>Create a route to see elevation profile</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Export Controls -->
+            <section class="sidebar-section">
+                <h2 class="section-title">Export</h2>
+                <div class="export-controls">
+                    <button id="export-gpx-btn" class="btn btn-success btn-full" disabled>
+                        Download GPX
+                    </button>
+                </div>
+            </section>
+        </aside>
+    </main>
+
+    <!-- Loading Overlay for API calls -->
+    <div id="loading-overlay" class="global-loading hidden">
+        <div class="loading-content">
+            <div class="spinner large"></div>
+            <p id="loading-message">Calculating route...</p>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Error</h3>
+                <button class="modal-close" aria-label="Close error modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="error-message">An error occurred</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary modal-close">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/gpx.js"></script>
+    <script src="js/waypoints.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
